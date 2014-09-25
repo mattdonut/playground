@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="import" href="/cow.html">
+    <script>
+    clicker = function(e) {
+        e.target.clicks += 1;
+    }
+
+    </script>
+</head>
+
+
+
+<body>
+    <x-cow onclick="clicker(event)" data-name="Milksy" data-clicks="10"></x-cow>
+</body>
+
+</html>
