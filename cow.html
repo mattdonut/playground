@@ -3,12 +3,16 @@
         .name {
             color: red;
         }
+        .cow-icon {
+            height: 64px;
+            width: 64px;
+        }
     </style>
     <div class="cow">
-        <h1>Name</h1>
         <h2 class="name">
             <span id="name">Milksy</span>
         </h2>
+        <img class="cow-icon click-target" src="http://free.clipartof.com/49-Free-Cartoon-Cow-Clip-Art.jpg">
         <div>
             <span id="clicks">0</span>
         </div>
@@ -16,23 +20,35 @@
 </template>
 
 <script>
+~function(){
     var protoCow = Object.create(HTMLElement.prototype)
     var template = document.currentScript.ownerDocument.querySelector('#cowTemplate');
 
     protoCow.createdCallback = function(e) {
-        console.log('A cow is born!', this);
         var root = this.createShadowRoot();
         var t = template.content.cloneNode(true)
-        t.querySelector('#name').textContent = this.attributes['data-name'].value
+        this.clicks = 0;
+        var self = this;
+        t.querySelector('.click-target').onclick = function (e) {
+            self.clicks += 1
+        }
+        if (this.attributes['data-name']) {
+            t.querySelector('#name').textContent = this.attributes['data-name'].value
+            this.name = this.attributes['data-name'].value
+        };
         Object.observe(this, function (changes) {
             var change = changes.pop()
             change.object.shadowRoot.querySelector('#clicks').textContent = change.object.clicks
+            change.object.shadowRoot.querySelector('#name').textContent = change.object.name
         })
-        this.clicks = parseInt(this.attributes['data-clicks'].value)
+        if (this.attributes['data-clicks']) {
+            this.clicks = parseInt(this.attributes['data-clicks'].value)
+        };
         root.appendChild(t);
     }
 
     var Cow = document.registerElement('x-cow', {
         prototype: protoCow
     })
+}()
 </script>

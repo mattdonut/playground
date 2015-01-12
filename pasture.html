@@ -1,0 +1,116 @@
+<link rel="import" href="/cow.html">
+
+<template id="pastureTemplate">
+    <style>
+        #cows, .cow-row {
+            display: flex;
+        }
+        .cow-pen {
+            padding: 30px;
+        }
+        dialog {
+          border: 1px solid rgba(0, 0, 0, 0.3);
+          border-radius: 6px;
+          box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+    <div class="pasture">
+        <content select="header"></content>
+        <dialog id="cow-namer">
+            <form id="cow-namer-form" method="dialog">
+                <input type="text" autofocus>
+                <button id="cow-namer-save" type="submit" value="save">Save</button>
+                <button id="cow-namer-cancel" type="submit" value="cancel">Cancel</button>
+            </form>
+        </dialog>
+        <button id="cowAdder">+ Cow</button>
+        <div class="cow-row">
+            <div id="cows"></div>
+        </div>
+        <content select="footer"></content>
+    </div>
+</template>
+
+<template id="penTemplate">
+    <div class="cow-pen">
+        <button>&times;</button>
+    </div>
+</template>
+
+<script>
+~function(){
+    'use strict';
+
+    function repeat (element, array, transform) {
+        var updater = function (changes) {
+            changes.forEach(function (change) {
+                change.removed.forEach(function (dead) {
+                    element.removeChild(element.children[change.index])
+                });
+                for (var i = change.index; i < (change.addedCount + change.index); i++) {
+                    element.insertBefore(transform(change.object[i]), change.object[i + 1])
+                };
+            });
+        }
+        Array.observe(array, updater);
+        return function () { Array.unobserve(array, updater); };
+    }
+
+    var protoPasture = Object.create(HTMLElement.prototype)
+    var template = document.currentScript.ownerDocument.querySelector('#pastureTemplate');
+    var penTemplate = document.currentScript.ownerDocument.querySelector('#penTemplate');
+
+    protoPasture.createdCallback = function(e) {
+        var self = this;
+        var selectedPen = undefined;
+        self.cows = []
+        var root = self.createShadowRoot();
+        var t = template.content.cloneNode(true)
+        var cowsElement = t.querySelector('#cows')
+        var dialog = t.querySelector('#cow-namer')
+        var namer = dialog.querySelector('input')
+//        dialog.querySelector('#cow-namer-form').onsubmit = function (e) {
+//            e.preventDefault()
+//            dialog.close(namer.value)
+//        }
+        dialog.addEventListener('close',function (e) {
+            if (dialog.returnValue === 'save') {
+                self.addCow(namer.value)
+            }
+            namer.value = null
+        })
+        self.addCow = function (name) {
+            var newCow = document.createElement('x-cow');
+            newCow.name = name
+            self.cows.push(newCow);
+            return newCow;
+        }
+        
+        self.selectedPen = function (pen) {
+            if (pen !== undefined) {
+                selectedPen = pen;
+            }
+            return selectedPen;
+        }
+        t.querySelector('#cowAdder').onclick = function () {dialog.show()}
+        repeat(cowsElement, self.cows, function (cow) {
+            var penT = penTemplate.content.cloneNode(true);
+            var pen = penT.querySelector('.cow-pen')
+            pen.appendChild(cow)
+            pen.onclick = function(e) {
+                self.selectedPen(pen);
+            }
+            penT.querySelector('button').onclick = function(e) {
+                self.cows.splice(self.cows.indexOf(cow),1);
+            }
+            return pen;
+        });
+
+        root.appendChild(t);
+    }
+
+    var Pasture = document.registerElement('cow-pasture', {
+        prototype: protoPasture
+    })
+}()
+</script>
